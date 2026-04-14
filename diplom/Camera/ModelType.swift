@@ -5,10 +5,12 @@
 //  Created by Иван Тарасюк on 20.12.2025.
 //
 
-enum ModelType {
+enum ModelType: CaseIterable, Identifiable {
     case custom
     case mobileNet
     case resNet
+
+    var id: Self { self }
 
     var displayName: String {
         switch self {

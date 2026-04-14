@@ -8,33 +8,56 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedTab = 0
-
     var body: some View {
-        TabView(selection: $selectedTab) {
-            CameraView(modelType: .custom, isActive: selectedTab == 0)
-                .tag(0)
+        TabView {
+            BenchmarkView()
                 .tabItem {
-                    Label("Моя", systemImage: "1.circle")
-                }
-
-            CameraView(modelType: .mobileNet, isActive: selectedTab == 1)
-                .tag(1)
-                .tabItem {
-                    Label("MobileNetV2", systemImage: "2.circle")
-                }
-
-            CameraView(modelType: .resNet, isActive: selectedTab == 2)
-                .tag(2)
-                .tabItem {
-                    Label("ResNet50", systemImage: "3.circle")
+                    Label("Исследование", systemImage: "chart.xyaxis.line")
                 }
 
             SettingsView()
-                .tag(3)
                 .tabItem {
                     Label("Настройки", systemImage: "gear")
                 }
         }
+    }
+}
+
+struct BenchmarkView: View {
+    @State private var selectedModel: ModelType = .custom
+    @State private var runID = UUID()
+
+    var body: some View {
+        CameraView(modelType: selectedModel,
+                   isActive: true,
+                   benchmarkMode: true)
+            .id(runID)
+            .safeAreaInset(edge: .top) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Сравнительное исследование моделей")
+                        .font(.headline)
+
+                    Picker("Модель", selection: $selectedModel) {
+                        ForEach(ModelType.allCases) { model in
+                            Text(model.displayName).tag(model)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: selectedModel) { _ in
+                        runID = UUID()
+                    }
+
+                    Button("Новый прогон") {
+                        runID = UUID()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Text("Для чистого эксперимента новый прогон пересоздаёт камеру и заново загружает модель.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+            }
     }
 }
