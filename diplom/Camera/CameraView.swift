@@ -12,6 +12,7 @@ import UIKit
 struct CameraView: View {
 
     let modelType: ModelType
+    let isActive: Bool
 
     @StateObject private var cameraModel = CameraModel()
     @StateObject private var speechManager = SpeechManager()
@@ -27,10 +28,10 @@ struct CameraView: View {
                 .onAppear {
                     cameraModel.configureSession()
                     cameraModel.setModel(modelType)
-                    cameraModel.startSession()
+                    updateActivityState(isActive)
                 }
                 .onDisappear {
-                    cameraModel.stopSession()
+                    updateActivityState(false)
                 }
                 .edgesIgnoringSafeArea(.all)
                 .gesture(
@@ -57,7 +58,11 @@ struct CameraView: View {
                     .padding(.bottom, 30)
             }
         }
+        .onChange(of: isActive) { active in
+            updateActivityState(active)
+        }
         .onChange(of: cameraModel.recognizedIdentifier) { newIdentifier in
+            guard isActive else { return }
 
             speechManager.stop()
             speakWorkItem?.cancel()
@@ -85,5 +90,19 @@ struct CameraView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0,
                                           execute: workItem)
         }
+    }
+
+    private func updateActivityState(_ isActive: Bool) {
+        if isActive {
+            cameraModel.configureSession()
+            cameraModel.setModel(modelType)
+            cameraModel.startSession()
+            return
+        }
+
+        cameraModel.stopSession()
+        speechManager.stop()
+        speakWorkItem?.cancel()
+        hapticManager.stopDangerPattern()
     }
 }
